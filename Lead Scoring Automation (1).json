@@ -1,0 +1,449 @@
+{
+  "name": "Lead Scoring Automation",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "1c90ff0b-4f3e-4e0e-822b-980aa4a4c8a8",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [
+        -352,
+        -240
+      ],
+      "id": "a9f9912a-7878-4a59-a82e-46103b24ffb6",
+      "name": "Webhook",
+      "webhookId": "1c90ff0b-4f3e-4e0e-822b-980aa4a4c8a8"
+    },
+    {
+      "parameters": {
+        "jsCode": "const data = $input.item.json.body; // <-- fix is here\n\nif (!data.full_name) throw new Error(\"Missing: full_name\");\nif (!data.email) throw new Error(\"Missing: email\");\nif (!data.budget) throw new Error(\"Missing: budget\");\nif (!data.interest_level) throw new Error(\"Missing: interest_level\");\n\nlet score = \"Cold\";\n\nif (data.budget > 5000 && data.interest_level === \"High\") {\n  score = \"Hot\";\n} else if (data.budget >= 2000 && data.interest_level === \"Medium\") {\n  score = \"Warm\";\n}\n\nreturn {\n  json: {\n    ...data,\n    score\n  }\n};\n"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        80,
+        -240
+      ],
+      "id": "eac7dea8-a5ce-400b-9721-153e17ac2107",
+      "name": "Code"
+    },
+    {
+      "parameters": {
+        "operation": "append",
+        "documentId": {
+          "__rl": true,
+          "value": "1Z-hmXr0Sirfnh0ps_ZU9GT7aSHqyh1PD0jgEej-uS14",
+          "mode": "list",
+          "cachedResultName": "lead data",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1Z-hmXr0Sirfnh0ps_ZU9GT7aSHqyh1PD0jgEej-uS14/edit?usp=drivesdk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "gid=0",
+          "mode": "list",
+          "cachedResultName": "Sheet1",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1Z-hmXr0Sirfnh0ps_ZU9GT7aSHqyh1PD0jgEej-uS14/edit#gid=0"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "full_name": "={{ $json.full_name }}",
+            "email": "={{ $json.email }}",
+            "phone": "={{ $json.phone }}",
+            "company_size": "={{ $json.company_size }}",
+            "budget": "={{ $json.budget }}",
+            "interest_level": "={{ $json.interest_level }}",
+            "score": "={{ $json.score }}",
+            "timestamp": "=\t{{ new Date().toISOString() }}"
+          },
+          "matchingColumns": [],
+          "schema": [
+            {
+              "id": "full_name",
+              "displayName": "full_name",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "email",
+              "displayName": "email",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "phone",
+              "displayName": "phone",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "company_size",
+              "displayName": "company_size",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "budget",
+              "displayName": "budget",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "interest_level",
+              "displayName": "interest_level",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "score",
+              "displayName": "score",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "timestamp",
+              "displayName": "timestamp",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.6,
+      "position": [
+        304,
+        -240
+      ],
+      "id": "4b387542-6779-4d0b-9b81-5307754525db",
+      "name": "Append row in sheet",
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "vQoD2YaXwM4odhXE",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "authentication": "oAuth2",
+        "select": "channel",
+        "channelId": {
+          "__rl": true,
+          "value": "C097X122T55",
+          "mode": "list",
+          "cachedResultName": "hot-leads"
+        },
+        "text": "=New Hot Lead: {{$json[\"full_name\"]}}, Budget £{{$json[\"budget\"]}}, Interest: {{$json[\"interest_level\"]}} – Check Google Sheet for details.",
+        "otherOptions": {}
+      },
+      "type": "n8n-nodes-base.slack",
+      "typeVersion": 2.3,
+      "position": [
+        752,
+        -240
+      ],
+      "id": "370d34cd-252c-4993-a85b-da4483198d12",
+      "name": "Send a message",
+      "webhookId": "7d32d6ff-00b9-44b5-88ff-ef10f149dfd2",
+      "credentials": {
+        "slackOAuth2Api": {
+          "id": "mbqWYPjca9dOSgu0",
+          "name": "Slack account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "3706c503-7500-4539-b9ba-3b2e515d4a5a",
+              "leftValue": "=score {{ $json.score }}",
+              "rightValue": "Hot",
+              "operator": {
+                "type": "string",
+                "operation": "contains"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        528,
+        -240
+      ],
+      "id": "950776c4-23dc-4053-9c04-d72edd8d11a8",
+      "name": "If"
+    },
+    {
+      "parameters": {
+        "amount": 2,
+        "unit": "minutes"
+      },
+      "type": "n8n-nodes-base.wait",
+      "typeVersion": 1.1,
+      "position": [
+        976,
+        -240
+      ],
+      "id": "f62db4c8-66f3-4300-a293-ca0744c67ee1",
+      "name": "Wait",
+      "webhookId": "dc64da8f-7ef4-47b4-8edd-feb3e0b90c80"
+    },
+    {
+      "parameters": {
+        "authentication": "oAuth2",
+        "select": "channel",
+        "channelId": {
+          "__rl": true,
+          "value": "C097X122T55",
+          "mode": "list",
+          "cachedResultName": "hot-leads"
+        },
+        "text": "=🕑 Follow-up Reminder: Please reach out to *{{ $json.full_name }}* (Budget: £{{ $json.budget }}, Interest: {{ $json.interest_level }}). View full details in Google Sheets.",
+        "otherOptions": {}
+      },
+      "type": "n8n-nodes-base.slack",
+      "typeVersion": 2.3,
+      "position": [
+        1200,
+        -240
+      ],
+      "id": "19aafd56-3775-4f22-bf3e-9317b5f42051",
+      "name": "Send a message1",
+      "webhookId": "cd20aeeb-1098-45b1-b51b-0e142368fab8",
+      "credentials": {
+        "slackOAuth2Api": {
+          "id": "mbqWYPjca9dOSgu0",
+          "name": "Slack account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "776acbcd-c18e-4361-8384-4314327efda1",
+              "name": "body.full_name",
+              "value": "={{ $json.body.data.fields[0].value }}",
+              "type": "string"
+            },
+            {
+              "id": "48c9242c-20a5-4c65-bac5-8628dca21a4f",
+              "name": "body.email",
+              "value": "={{ $json.body.data.fields[1].value }}",
+              "type": "string"
+            },
+            {
+              "id": "9dd4fe81-96bc-4ecc-b254-692ffb619ce9",
+              "name": "body.phone",
+              "value": "={{ $json.body.data.fields[2].value }}",
+              "type": "string"
+            },
+            {
+              "id": "20ff8046-2fe5-43c8-a764-629568ea56f2",
+              "name": "body.company_size",
+              "value": "={{ $json.body.data.fields[3].options.find(option => option.id === $json.body.data.fields[3].value[0]).text }}",
+              "type": "string"
+            },
+            {
+              "id": "769ea83d-a07b-4601-bc13-2385fa335ce9",
+              "name": "body.budget",
+              "value": "={{ $json.body.data.fields[4].value }}",
+              "type": "number"
+            },
+            {
+              "id": "e365dcea-2feb-4ca3-afc6-abad70c207f5",
+              "name": "body.interest_level",
+              "value": "={{ $json.body.data.fields[5].options.find(option => option.id === $json.body.data.fields[5].value[0]).text }}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        -144,
+        -240
+      ],
+      "id": "48f105a6-7927-4505-9b34-778c0d7cbb40",
+      "name": "Edit Fields"
+    }
+  ],
+  "pinData": {
+    "Webhook": [
+      {
+        "json": {
+          "headers": {
+            "host": "sheilathungu.app.n8n.cloud",
+            "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/138.0.0.0 Safari/537.36",
+            "content-length": "164",
+            "accept": "*/*",
+            "accept-encoding": "gzip, br",
+            "cdn-loop": "cloudflare; loops=1; subreqs=1",
+            "cf-connecting-ip": "64.227.21.251",
+            "cf-ew-via": "15",
+            "cf-ipcountry": "US",
+            "cf-ray": "967f82ee2181727b-EWR",
+            "cf-visitor": "{\"scheme\":\"https\"}",
+            "cf-worker": "n8n.cloud",
+            "content-type": "application/json",
+            "x-forwarded-for": "64.227.21.251, 172.70.115.165",
+            "x-forwarded-host": "sheilathungu.app.n8n.cloud",
+            "x-forwarded-port": "443",
+            "x-forwarded-proto": "https",
+            "x-forwarded-server": "traefik-prod-users-gwc-30-6d57d45df-gvn7f",
+            "x-is-trusted": "yes",
+            "x-real-ip": "64.227.21.251"
+          },
+          "params": {},
+          "query": {},
+          "body": {
+            "full_name": "Jane Doe",
+            "email": "jane@example.com",
+            "phone": "+254700123456",
+            "company_size": "51-200",
+            "budget": 10000,
+            "interest_level": "High"
+          },
+          "webhookUrl": "https://sheilathungu.app.n8n.cloud/webhook/1c90ff0b-4f3e-4e0e-822b-980aa4a4c8a8",
+          "executionMode": "production"
+        }
+      }
+    ]
+  },
+  "connections": {
+    "Webhook": {
+      "main": [
+        [
+          {
+            "node": "Edit Fields",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Code": {
+      "main": [
+        [
+          {
+            "node": "Append row in sheet",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Append row in sheet": {
+      "main": [
+        [
+          {
+            "node": "If",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "If": {
+      "main": [
+        [
+          {
+            "node": "Send a message",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Send a message": {
+      "main": [
+        [
+          {
+            "node": "Wait",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Wait": {
+      "main": [
+        [
+          {
+            "node": "Send a message1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Edit Fields": {
+      "main": [
+        [
+          {
+            "node": "Code",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": true,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "versionId": "f2e97b30-bf21-4d0b-a219-a33c5767726a",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "49bcb0447fb71b7427d5434e64837154a00b42282b74ba9ffd7762b6b1830122"
+  },
+  "id": "r27E5T9KEfCHoYJK",
+  "tags": []
+}
